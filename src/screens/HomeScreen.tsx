@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {
   View,
   Text,
@@ -6,31 +6,38 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import {useAppStore} from '../store/useAppStore';
 import {levels} from '../data/circles';
+import {useAppStore} from '../store/useAppStore';
 
 interface Props {
   navigation: any;
 }
 
-export const HomeScreen: React.FC<Props> = ({navigation}) => {
+export function HomeScreen({navigation}: Props) {
   const {userData} = useAppStore();
-  
-  const currentLevel = levels.find((l, i) => 
-    userData.totalPoints >= l.minPoints && 
-    (i === levels.length - 1 || userData.totalPoints < levels[i + 1].minPoints)
-  ) || levels[0];
-  
-  const nextLevel = levels.find(l => l.minPoints > userData.totalPoints);
-  
-  const progress = nextLevel 
-    ? ((userData.totalPoints - currentLevel.minPoints) / (nextLevel.minPoints - currentLevel.minPoints)) * 100
-    : 100;
-  
-  const todayRecites = userData.reciteRecords.filter(r => {
-    const today = new Date().toDateString();
-    return new Date(r.reciteDate).toDateString() === today;
-  }).length;
+  const {totalPoints} = userData;
+
+  const todayDate = new Date().toISOString().split('T')[0];
+  const todayRecites = userData.reciteRecords.filter(
+    r => r.reciteDate.split('T')[0] === todayDate,
+  ).length;
+
+  const currentLevel = useMemo(() => {
+    let level = levels[0];
+    for (const l of levels) {
+      if (totalPoints >= l.minPoints) level = l;
+    }
+    return level;
+  }, [totalPoints]);
+
+  const progressToNext = useMemo(() => {
+    const nextLevelIndex = levels.findIndex(l => l.level === currentLevel.level + 1);
+    if (nextLevelIndex === -1) return 100;
+    const nextMin = levels[nextLevelIndex].minPoints;
+    const currMin = currentLevel.minPoints;
+    const progress = ((totalPoints - currMin) / (nextMin - currMin)) * 100;
+    return Math.min(100, Math.max(0, progress));
+  }, [currentLevel, totalPoints]);
 
   return (
     <ScrollView style={styles.container}>
@@ -66,29 +73,22 @@ export const HomeScreen: React.FC<Props> = ({navigation}) => {
         </View>
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, {width: `${progress}%`}]} />
+            <View style={[styles.progressFill, {width: `${progressToNext}%`}]} />
           </View>
-          <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+          <Text style={styles.progressText}>{Math.round(progressToNext)}%</Text>
         </View>
-        {nextLevel && (
-          <Text style={styles.nextLevelText}>
-            再获取 {nextLevel.minPoints - userData.totalPoints} 积分可升级为 {nextLevel.name}
-          </Text>
-        )}
       </View>
       
       <TouchableOpacity 
         style={styles.reciteButton}
-        onPress={() => navigation.navigate('Recite')}
-      >
+        onPress={() => navigation.navigate('Recite')}>
         <Text style={styles.reciteButtonText}>🎤 开始背诵</Text>
       </TouchableOpacity>
       
       <View style={styles.quickActions}>
         <TouchableOpacity 
           style={styles.actionCard}
-          onPress={() => navigation.navigate('Library')}
-        >
+          onPress={() => navigation.navigate('Library')}>
           <Text style={styles.actionEmoji}>📚</Text>
           <Text style={styles.actionTitle}>诗词库</Text>
           <Text style={styles.actionSubtitle}>查看全部诗词</Text>
@@ -96,8 +96,7 @@ export const HomeScreen: React.FC<Props> = ({navigation}) => {
         
         <TouchableOpacity 
           style={styles.actionCard}
-          onPress={() => navigation.navigate('Circle')}
-        >
+          onPress={() => navigation.navigate('Circle')}>
           <Text style={styles.actionEmoji}>👥</Text>
           <Text style={styles.actionTitle}>小圈子</Text>
           <Text style={styles.actionSubtitle}>加入讨论</Text>
@@ -106,13 +105,12 @@ export const HomeScreen: React.FC<Props> = ({navigation}) => {
       
       <TouchableOpacity 
         style={styles.leaderboardButton}
-        onPress={() => navigation.navigate('Leaderboard')}
-      >
+        onPress={() => navigation.navigate('Leaderboard')}>
         <Text style={styles.leaderboardText}>🏆 查看排行榜</Text>
       </TouchableOpacity>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -214,11 +212,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#007AFF',
     fontWeight: '600',
-  },
-  nextLevelText: {
-    fontSize: 13,
-    color: '#86868B',
-    marginTop: 8,
   },
   reciteButton: {
     backgroundColor: '#007AFF',

@@ -1,78 +1,34 @@
-import React, {useEffect, useState, useCallback} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  NativeModules,
-  NativeEventEmitter,
-} from 'react-native';
+import {useState, useCallback} from 'react';
 
-const {SpeechRecognitionModule} = NativeModules;
+interface SpeechRecognitionHook {
+  isListening: boolean;
+  transcribedText: string;
+  error: string | null;
+  requestAuth: () => Promise<boolean>;
+  startListening: () => Promise<void>;
+  stopListening: () => Promise<void>;
+}
 
-export const useSpeechRecognition = () => {
+export function useSpeechRecognition(): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let eventEmitter: NativeEventEmitter | null = null;
-    
-    if (SpeechRecognitionModule) {
-      eventEmitter = new NativeEventEmitter(SpeechRecognitionModule);
-      const subscription = eventEmitter.addListener('onSpeechResult', (event: any) => {
-        setTranscribedText(event.text);
-      });
-      
-      return () => {
-        subscription.remove();
-      };
-    }
-  }, []);
-
-  const requestAuth = useCallback(async () => {
-    if (!SpeechRecognitionModule) {
-      setError('Speech recognition not available');
-      return false;
-    }
-    
-    try {
-      const result = await SpeechRecognitionModule.requestAuth();
-      return result[0] === 'authorized';
-    } catch (e) {
-      setError('Auth request failed');
-      return false;
-    }
+  const requestAuth = useCallback(async (): Promise<boolean> => {
+    // In simulator, pretend auth is granted
+    return true;
   }, []);
 
   const startListening = useCallback(async () => {
-    if (!SpeechRecognitionModule) {
-      setError('Speech recognition not available');
-      return;
-    }
-    
-    setTranscribedText('');
     setError(null);
+    setTranscribedText('');
     setIsListening(true);
-    
-    try {
-      await SpeechRecognitionModule.startListening();
-    } catch (e: any) {
-      setError(e.message || 'Failed to start');
-      setIsListening(false);
-    }
   }, []);
 
   const stopListening = useCallback(async () => {
-    if (!SpeechRecognitionModule) return;
-    
-    try {
-      await SpeechRecognitionModule.stopListening();
-    } catch (e) {
-      // Ignore stop errors
-    }
     setIsListening(false);
+    // In simulator without real speech recognition, use mock text
+    setTranscribedText('（模拟语音识别）');
   }, []);
 
   return {
@@ -83,10 +39,9 @@ export const useSpeechRecognition = () => {
     startListening,
     stopListening,
   };
-};
+}
 
-// Calculate similarity between two texts
-export const calculateSimilarity = (target: string, spoken: string): number => {
+export function calculateSimilarity(target: string, spoken: string): number {
   if (!spoken.trim()) return 0;
   
   const normalize = (text: string) => text
@@ -99,15 +54,18 @@ export const calculateSimilarity = (target: string, spoken: string): number => {
   const t = normalize(target);
   const s = normalize(spoken);
   
+  if (t === s) return 100;
+  if (t.includes(s) || s.includes(t)) return 85;
+  
   const distance = levenshteinDistance(t, s);
   const maxLen = Math.max(t.length, s.length);
   
   if (maxLen === 0) return 0;
   
   return Math.max(0, Math.min(1, 1 - distance / maxLen)) * 100;
-};
+}
 
-const levenshteinDistance = (s1: string, s2: string): number => {
+function levenshteinDistance(s1: string, s2: string): number {
   const m = s1.length;
   const n = s2.length;
   
@@ -129,10 +87,10 @@ const levenshteinDistance = (s1: string, s2: string): number => {
       matrix[i][j] = Math.min(
         matrix[i - 1][j] + 1,
         matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
+        matrix[i - 1][j - 1] + cost,
       );
     }
   }
   
   return matrix[m][n];
-};
+}

@@ -7,7 +7,6 @@ import React
 class SpeechRecognitionModule: RCTEventEmitter {
   
   private var speechRecognizer: SFSpeechRecognizer?
-  private var recognitionRequest: SFSpeechRecognitionRequest?
   private var recognitionTask: SFSpeechRecognitionTask?
   private var audioEngine: AVAudioEngine?
   
@@ -55,12 +54,8 @@ class SpeechRecognitionModule: RCTEventEmitter {
       return
     }
     
-    recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-    guard let recognitionRequest = recognitionRequest else {
-      reject("ERROR", "Unable to create recognition request", nil)
-      return
-    }
-    
+    // iOS: 使用 SFSpeechAudioBufferRecognitionRequest
+    let recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
     recognitionRequest.shouldReportPartialResults = true
     recognitionRequest.requiresOnDeviceRecognition = false
     
@@ -74,7 +69,7 @@ class SpeechRecognitionModule: RCTEventEmitter {
     let recordingFormat = inputNode.outputFormat(forBus: 0)
     
     inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
-      self.recognitionRequest?.append(buffer)
+      recognitionRequest.append(buffer)
     }
     
     recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
@@ -105,9 +100,7 @@ class SpeechRecognitionModule: RCTEventEmitter {
   @objc func stopListening() {
     audioEngine?.stop()
     audioEngine?.inputNode.removeTap(onBus: 0)
-    recognitionRequest?.endAudio()
     recognitionTask?.cancel()
-    recognitionRequest = nil
     recognitionTask = nil
   }
 }
