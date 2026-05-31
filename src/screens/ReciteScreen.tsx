@@ -28,6 +28,7 @@ export function ReciteScreen({navigation}: any) {
   const {
     isListening,
     transcribedText,
+    partialText,
     error,
     requestAuth,
     startListening,
@@ -38,13 +39,15 @@ export function ReciteScreen({navigation}: any) {
   const [similarityScore, setSimilarityScore] = useState(0);
   const [voicePassed, setVoicePassed] = useState(false);
 
+  // 实时计算匹配度
   useEffect(() => {
-    if (transcribedText && currentPoetry) {
-      const score = calculateSimilarity(currentPoetry.content, transcribedText);
+    const textToCompare = partialText || transcribedText;
+    if (textToCompare && currentPoetry) {
+      const score = calculateSimilarity(currentPoetry.content, textToCompare);
       setSimilarityScore(score);
       setVoicePassed(score >= 90);
     }
-  }, [transcribedText, currentPoetry]);
+  }, [partialText, transcribedText, currentPoetry]);
 
   const handleStartRecite = async () => {
     const poetry = poems[Math.floor(Math.random() * poems.length)];
@@ -160,17 +163,19 @@ export function ReciteScreen({navigation}: any) {
         <View style={styles.voiceCard}>
           <Text style={styles.voiceTitle}>🎤 语音背诵</Text>
 
-          {transcribedText ? (
+          {/* 实时转写展示 */}
+          {(partialText || transcribedText) ? (
             <View style={styles.resultBox}>
               <Text style={styles.resultLabel}>识别内容：</Text>
-              <Text style={styles.transcribedText}>{transcribedText}</Text>
+              <Text style={styles.transcribedText}>
+                {partialText || transcribedText}
+              </Text>
               <View style={styles.scoreRow}>
-                <Text style={styles.scoreLabel}>匹配度：</Text>
-                <Text
-                  style={[
-                    styles.scoreValue,
-                    voicePassed ? styles.scorePass : styles.scoreFail,
-                  ]}>
+                <Text style={styles.scoreLabel}>实时匹配度：</Text>
+                <Text style={[
+                  styles.scoreValue,
+                  voicePassed ? styles.scorePass : (similarityScore > 60 ? styles.scoreMid : styles.scoreFail),
+                ]}>
                   {Math.round(similarityScore)}%
                 </Text>
                 {voicePassed && <Text style={styles.passBadge}>✓ 通过</Text>}
@@ -178,27 +183,32 @@ export function ReciteScreen({navigation}: any) {
             </View>
           ) : (
             <Text style={styles.hintText}>
-              {isListening ? '🎙️ 正在聆听...' : '点击下方按钮开始朗读诗词'}
+              {isListening ? '🎙️ 正在聆听，请开始朗读诗词…' : '点击下方按钮开始朗读诗词'}
             </Text>
           )}
 
+          {/* 结束背诵按钮（任何时候都可点） */}
           <View style={styles.voiceButtons}>
-            {!transcribedText ? (
+            {!isListening && !transcribedText ? (
               <TouchableOpacity
                 style={[styles.micButton, isListening && styles.micButtonActive]}
                 onPress={handleStartListening}>
-                <Text style={styles.micIcon}>{isListening ? '🔴' : '🎤'}</Text>
+                <Text style={styles.micIcon}>🎤</Text>
               </TouchableOpacity>
-            ) : !voicePassed ? (
+            ) : (
               <TouchableOpacity
-                style={styles.micButton}
+                style={[styles.micButton, styles.micButtonStop]}
                 onPress={handleStopAndCheck}>
-                <Text style={styles.micIcon}>🔄</Text>
+                <Text style={styles.micIcon}>🔴</Text>
               </TouchableOpacity>
-            ) : null}
+            )}
           </View>
 
-          {transcribedText && !voicePassed && (
+          {isListening && (
+            <Text style={styles.listeningHint}>点击结束按钮停止识别</Text>
+          )}
+
+          {!voicePassed && transcribedText && similarityScore < 90 && (
             <Text style={styles.failHint}>
               匹配度需达到 90% 以上，请重试
             </Text>
@@ -324,8 +334,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   micButtonActive: {backgroundColor: '#FF3B30'},
+  micButtonStop: {backgroundColor: '#FF3B30'},
   micIcon: {fontSize: 28},
   failHint: {fontSize: 13, color: '#FF3B30', textAlign: 'center', marginTop: 8},
+  scoreMid: {color: '#FF9500'},
+  listeningHint: {fontSize: 13, color: '#007AFF', textAlign: 'center', marginTop: 8},
   bottomBar: {
     padding: 16,
     paddingBottom: 34,

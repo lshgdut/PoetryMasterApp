@@ -3,6 +3,7 @@ import {useState, useCallback, useRef} from 'react';
 interface SpeechRecognitionHook {
   isListening: boolean;
   transcribedText: string;
+  partialText: string;
   error: string | null;
   requestAuth: () => Promise<boolean>;
   startListening: () => Promise<void>;
@@ -13,9 +14,11 @@ interface SpeechRecognitionHook {
 export function useSpeechRecognition(): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
+  const [partialText, setPartialText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const targetPoemRef = useRef<string>('');
   const listeningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const partialIndexRef = useRef<number>(0);
 
   const requestAuth = useCallback(async (): Promise<boolean> => {
     return true;
@@ -28,30 +31,48 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
   const startListening = useCallback(async () => {
     setError(null);
     setTranscribedText('');
+    setPartialText('');
     setIsListening(true);
+    partialIndexRef.current = 0;
 
     if (listeningTimeoutRef.current) {
       clearTimeout(listeningTimeoutRef.current);
     }
 
-    // 模拟：4秒后返回目标诗词内容（模拟器模式下）
-    listeningTimeoutRef.current = setTimeout(() => {
-      setTranscribedText(targetPoemRef.current);
-      setIsListening(false);
-    }, 4000);
+    // 模拟实时转写：每隔800ms追加几个字
+    const chars = targetPoemRef.current.split('');
+    let index = 0;
+    const intervalId = setInterval(() => {
+      if (index < chars.length) {
+        const chunk = chars.slice(index, index + 3).join('');
+        setPartialText(prev => prev + chunk);
+        index += 3;
+      } else {
+        clearInterval(intervalId);
+        // 完成后把最终内容设进 transcribedText
+        setTranscribedText(targetPoemRef.current);
+        setPartialText('');
+      }
+    }, 600);
+
+    listeningTimeoutRef.current = intervalId as unknown as ReturnType<typeof setTimeout>;
   }, []);
 
   const stopListening = useCallback(async () => {
     if (listeningTimeoutRef.current) {
-      clearTimeout(listeningTimeoutRef.current);
+      clearInterval(listeningTimeoutRef.current as unknown as ReturnType<typeof setInterval>);
+      listeningTimeoutRef.current = null;
     }
-    // 停止时返回已识别的内容（用户说出的内容）
+    // 把实时识别内容凝固为最终结果
+    setTranscribedText(prev => prev || partialText);
+    setPartialText('');
     setIsListening(false);
-  }, []);
+  }, [partialText]);
 
   return {
     isListening,
     transcribedText,
+    partialText,
     error,
     requestAuth,
     startListening,
