@@ -35,8 +35,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
-  override func bundleURL() -> URL! {
-    // Always load from the bundled JS bundle (no packager)
-    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+  override func sourceURL(for bridge: RCTBridge) -> URL? {
+    self.bundleURL()
+  }
+
+  override func bundleURL() -> URL? {
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
   }
 }

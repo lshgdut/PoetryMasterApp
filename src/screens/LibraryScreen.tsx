@@ -18,9 +18,7 @@ export function LibraryScreen({navigation}: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtn}>‹ 返回</Text>
-        </TouchableOpacity>
+        <View style={{width: 50}} />
         <Text style={styles.headerTitle}>📚 诗词库</Text>
         <View style={{width: 50}} />
       </View>

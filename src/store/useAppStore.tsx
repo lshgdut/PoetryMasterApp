@@ -68,11 +68,28 @@ function appReducer(state: AppState, action: Action): AppState {
       return {...state, voiceRecitePassed: action.payload};
     case 'ADD_RECORD': {
       const {record, pointsEarned} = action.payload;
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const lastDate = state.userData.lastReciteDate;
+      let newStreakDays = state.userData.streakDays;
+      if (lastDate) {
+        const lastDay = lastDate.split('T')[0];
+        const diff = Math.floor((now.getTime() - new Date(lastDay).getTime()) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          newStreakDays = state.userData.streakDays + 1;
+        } else if (diff > 1) {
+          newStreakDays = 1;
+        }
+      } else {
+        newStreakDays = 1;
+      }
       return {
         ...state,
         userData: {
           ...state.userData,
           totalPoints: state.userData.totalPoints + pointsEarned,
+          streakDays: newStreakDays,
+          lastReciteDate: now.toISOString(),
           reciteRecords: [...state.userData.reciteRecords, record],
           lastReciteDates: {
             ...state.userData.lastReciteDates,

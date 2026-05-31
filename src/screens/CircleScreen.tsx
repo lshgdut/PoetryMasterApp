@@ -6,9 +6,7 @@ export function CircleScreen({navigation}: any) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtn}>‹ 返回</Text>
-        </TouchableOpacity>
+        <View style={{width: 50}} />
         <Text style={styles.headerTitle}>👥 小圈子</Text>
         <View style={{width: 50}} />
       </View>

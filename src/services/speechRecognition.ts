@@ -1,5 +1,4 @@
 import {useState, useCallback, useRef} from 'react';
-import {poems} from '../data/poems';
 
 interface SpeechRecognitionHook {
   isListening: boolean;
@@ -8,16 +7,22 @@ interface SpeechRecognitionHook {
   requestAuth: () => Promise<boolean>;
   startListening: () => Promise<void>;
   stopListening: () => Promise<void>;
+  setTargetPoem: (content: string) => void;
 }
 
 export function useSpeechRecognition(): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const targetPoemRef = useRef<string>('');
   const listeningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const requestAuth = useCallback(async (): Promise<boolean> => {
     return true;
+  }, []);
+
+  const setTargetPoem = useCallback((content: string) => {
+    targetPoemRef.current = content;
   }, []);
 
   const startListening = useCallback(async () => {
@@ -29,9 +34,9 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
       clearTimeout(listeningTimeoutRef.current);
     }
 
+    // 模拟：4秒后返回目标诗词内容（模拟器模式下）
     listeningTimeoutRef.current = setTimeout(() => {
-      const randomPoem = poems[Math.floor(Math.random() * poems.length)];
-      setTranscribedText(randomPoem.content);
+      setTranscribedText(targetPoemRef.current);
       setIsListening(false);
     }, 4000);
   }, []);
@@ -40,12 +45,9 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     if (listeningTimeoutRef.current) {
       clearTimeout(listeningTimeoutRef.current);
     }
-    if (!transcribedText) {
-      const randomPoem = poems[Math.floor(Math.random() * poems.length)];
-      setTranscribedText(randomPoem.content);
-    }
+    // 停止时返回已识别的内容（用户说出的内容）
     setIsListening(false);
-  }, [transcribedText]);
+  }, []);
 
   return {
     isListening,
@@ -54,6 +56,7 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     requestAuth,
     startListening,
     stopListening,
+    setTargetPoem,
   };
 }
 

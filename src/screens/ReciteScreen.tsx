@@ -32,6 +32,7 @@ export function ReciteScreen({navigation}: any) {
     requestAuth,
     startListening,
     stopListening,
+    setTargetPoem,
   } = useSpeechRecognition();
 
   const [similarityScore, setSimilarityScore] = useState(0);
@@ -52,6 +53,7 @@ export function ReciteScreen({navigation}: any) {
     setSimilarityScore(0);
     setVoicePassed(false);
     startRecite(poetry.id);
+    setTargetPoem(poetry.content);
 
     const auth = await requestAuth();
     if (!auth) {
