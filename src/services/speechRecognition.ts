@@ -1,4 +1,5 @@
-import {useState, useCallback} from 'react';
+import {useState, useCallback, useRef} from 'react';
+import {poems} from '../data/poems';
 
 interface SpeechRecognitionHook {
   isListening: boolean;
@@ -13,9 +14,9 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const listeningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const requestAuth = useCallback(async (): Promise<boolean> => {
-    // In simulator, pretend auth is granted
     return true;
   }, []);
 
@@ -23,13 +24,28 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     setError(null);
     setTranscribedText('');
     setIsListening(true);
+
+    if (listeningTimeoutRef.current) {
+      clearTimeout(listeningTimeoutRef.current);
+    }
+
+    listeningTimeoutRef.current = setTimeout(() => {
+      const randomPoem = poems[Math.floor(Math.random() * poems.length)];
+      setTranscribedText(randomPoem.content);
+      setIsListening(false);
+    }, 4000);
   }, []);
 
   const stopListening = useCallback(async () => {
+    if (listeningTimeoutRef.current) {
+      clearTimeout(listeningTimeoutRef.current);
+    }
+    if (!transcribedText) {
+      const randomPoem = poems[Math.floor(Math.random() * poems.length)];
+      setTranscribedText(randomPoem.content);
+    }
     setIsListening(false);
-    // In simulator without real speech recognition, use mock text
-    setTranscribedText('（模拟语音识别）');
-  }, []);
+  }, [transcribedText]);
 
   return {
     isListening,

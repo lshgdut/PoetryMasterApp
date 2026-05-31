@@ -1,9 +1,9 @@
 import React, {useState, useMemo} from 'react';
-import {View, Text, StyleSheet, FlatList} from 'react-native';
+import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
 import {generateLeaderboard} from '../data/circles';
 import {useAppStore} from '../store/useAppStore';
 
-export function LeaderboardScreen() {
+export function LeaderboardScreen({navigation}: any) {
   const [activeTab, setActiveTab] = useState<'global' | 'circle'>('global');
   const {userData} = useAppStore();
   const leaderboard = useMemo(
@@ -14,7 +14,11 @@ export function LeaderboardScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtn}>‹ 返回</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>🏆 排行榜</Text>
+        <View style={{width: 50}} />
       </View>
       <View style={styles.tabs}>
         <View style={[styles.tab, activeTab === 'global' && styles.tabActive]}>
@@ -47,8 +51,17 @@ export function LeaderboardScreen() {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#F5F5F7'},
-  header: {paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20},
-  headerTitle: {fontSize: 28, fontWeight: 'bold', color: '#1D1D1F'},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  backBtn: {fontSize: 17, color: '#007AFF'},
+  headerTitle: {fontSize: 17, fontWeight: '600', color: '#1D1D1F'},
   tabs: {flexDirection: 'row', marginHorizontal: 16, backgroundColor: '#E5E5E7', borderRadius: 10, padding: 4},
   tab: {flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8},
   tabActive: {backgroundColor: '#FFFFFF'},

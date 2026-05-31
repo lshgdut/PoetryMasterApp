@@ -1,97 +1,89 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 诗词大师 PoetryMasterApp
 
-# Getting Started
+一款用 React Native 构建的诗词背诵与学习 iOS 应用。
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 功能特色
 
-## Step 1: Start Metro
+- **🏠 首页** — 查看总积分、连续天数、今日背诵数；展示当前等级与升级进度
+- **🎤 背诵模式** — 随机抽取诗词，通过语音识别模拟（模拟器模式）验证背诵，支持全文对照和译文展示
+- **📚 诗词库** — 浏览 20 首经典诗词，支持按类别（唐诗/宋词/元曲）筛选和关键词搜索
+- **👥 小圈子** — 加入诗词学习圈子，与同好一起进步
+- **🏆 排行榜** — 全站排名，实时显示你的位置
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 积分规则
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+| 类型 | 条件 | 积分 |
+|------|------|------|
+| 首次背诵 | 该诗词从未背诵过 | +10 |
+| 普通背诵 | 距上次背诵 ≥3 天 | +5 |
+| 快速背诵 | 距上次背诵 <3 天 | +3 |
 
-```sh
-# Using npm
+## 等级体系
+
+| 等级 | 名称 | 最低积分 |
+|------|------|----------|
+| 🌱 | 诗词小白 | 0 |
+| 📚 | 诗词学徒 | 50 |
+| 🎓 | 诗词少年 | 150 |
+| ✍️ | 诗词书生 | 300 |
+| 🌟 | 诗词才子 | 500 |
+| 🏆 | 诗词达人 | 800 |
+| 💫 | 诗词高手 | 1200 |
+| 🎭 | 诗词大师 | 1800 |
+| 👑 | 诗词宗师 | 2500 |
+| ✨ | 诗仙 | 3500 |
+
+## 技术栈
+
+- React Native 0.83
+- React Navigation 7（底部 Tab + 栈导航）
+- Context + useReducer 状态管理（AsyncStorage 持久化）
+- 语音识别模拟（Levenshtein 距离计算匹配度）
+
+## 运行方式
+
+```bash
+cd PoetryMasterApp
+
+# 安装依赖
+npm install
+
+# 安装 iOS CocoaPods
+cd ios && bundle exec pod install && cd ..
+
+# 启动 Metro 开发服务器
 npm start
 
-# OR using Yarn
-yarn start
+# 构建 iOS（另一个终端）
+cd ios
+xcodebuild -workspace PoetryMasterApp.xcworkspace \
+  -scheme PoetryMasterApp \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+  build
 ```
 
-## Step 2: Build and run your app
+## 项目结构
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```
+src/
+├── App.tsx              # 导航配置
+├── data/
+│   ├── poems.ts         # 20首诗词数据
+│   ├── circles.ts       # 圈子 + 排行榜 + 等级
+│   └── types.ts         # TypeScript 类型定义
+├── screens/
+│   ├── HomeScreen.tsx   # 首页
+│   ├── ReciteScreen.tsx # 背诵模式
+│   ├── LibraryScreen.tsx # 诗词库
+│   ├── CircleScreen.tsx # 圈子
+│   └── LeaderboardScreen.tsx # 排行榜
+├── store/
+│   └── useAppStore.tsx  # 全局状态管理
+└── services/
+    └── speechRecognition.ts # 语音识别 + 相似度
 ```
 
-### iOS
+## 截图
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+模拟器截图位于 `../sim_screen*.png`（共 37 张）
